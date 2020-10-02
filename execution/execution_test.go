@@ -1892,3 +1892,33 @@ func newAddress(name string) crypto.Address {
 	hasher.Write([]byte(name))
 	return crypto.MustAddressFromBytes(hasher.Sum(nil))
 }
+
+func TestGetValues(t *testing.T) {
+	stateDB := dbm.NewDB("state", dbBackend, dbDir)
+	defer stateDB.Close()
+	genDoc := newBaseGenDoc(value.ZeroAccountValues, value.ZeroAccountValues)
+	genDoc.Accounts[0].Values.Base.Set(value.Input, true) // give the 0 account value
+	genDoc.Accounts[0].Values.Base.Set(value.Send, true)  // give the 0 account value
+	st, err := state.MakeGenesisState(stateDB, &genDoc)
+	require.NoError(t, err)
+	err = st.InitialCommit()
+	require.NoError(t, err)
+	exe := makeExecutor(st)
+
+	// A single input, having the value, should succeed
+	tx := payload.NewSendTx()
+	if err := tx.AddInput(exe.stateCache, users[0].GetPublicKey(), 5); err != nil {
+		t.Fatal(err)
+	}
+	tx.AddOutput(users[1].GetAddress(), 5)
+	err = exe.signExecuteCommit(tx, users[0])
+	require.NoError(t, err)
+
+	// Two inputs, one with value, one without, should fail
+	tx = payload.NewSendTx()
+	require.NoError(t, tx.AddInput(exe.stateCache, users[1].GetPublicKey(), 5))
+	require.NoError(t, tx.AddOutput(users[2].GetAddress(), 10))
+	require.NoError(t, tx.AddInput(exe.stateCache, users[0].GetPublicKey(), 5))
+	err = exe.signExecuteCommit(tx, users[:2]...)
+	require.Error(t, err)
+}
