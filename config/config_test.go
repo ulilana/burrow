@@ -1,17 +1,18 @@
 package config
 
 import (
-	"fmt"
-	"testing"
+    "fmt"
+    "testing"
 
-	"github.com/hyperledger/burrow/genesis"
+    "github.com/hyperledger/burrow/genesis"
 )
 
 func TestBurrowConfigSerialise(t *testing.T) {
-	conf := &BurrowConfig{
-		GenesisDoc: &genesis.GenesisDoc{
-			ChainName: "Foo",
-		},
-	}
-	fmt.Println(conf.JSONString())
+    conf := &BurrowConfig{
+        GenesisDoc: &genesis.GenesisDoc{
+            ChainName: "Foo",
+        },
+    }
+    fmt.Println(conf.JSONString())
 }
+
